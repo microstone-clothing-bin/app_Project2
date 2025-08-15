@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
+import 'package:microstone_clothing_bin/loginPage/loginMainPage.dart';
+import 'package:microstone_clothing_bin/memoPage/memoListProvider.dart';
+import 'package:provider/provider.dart';
 
 import 'Home/BottomIcon0.dart';
 import 'BottomIcon1.dart';
@@ -17,7 +20,12 @@ void main() async {
       print("네이버 지도 인증 실패: $ex");
     },
   );
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => MemoUpdator())],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
