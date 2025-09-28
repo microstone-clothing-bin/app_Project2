@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:microstone_clothing_bin/join/signup_header.dart';
 import 'package:microstone_clothing_bin/join/progress_indicator.dart' as custom;
-import 'password_input.dart';
-import 'validation_requirements.dart';
+import 'package:microstone_clothing_bin/join/pw/password_input.dart';
+import 'package:microstone_clothing_bin/join/pw/validation_requirements.dart';
 import 'package:microstone_clothing_bin/join/next_button.dart';
-import 'package:microstone_clothing_bin/join/name/Nickname_main.dart';
+import 'Check.dart';
 
-class PwMainStep extends StatefulWidget {
-  const PwMainStep({Key? key}) : super(key: key);
+class RePwStep extends StatefulWidget {
+  const RePwStep({Key? key}) : super(key: key);
 
   @override
-  State<PwMainStep> createState() => _PwMainStep();
+  State<RePwStep> createState() => _RePwStep();
 }
 
-class _PwMainStep extends State<PwMainStep> {
+class _RePwStep extends State<RePwStep> {
   String password = "";
   String confirmPassword = "";
   bool showPassword = false;
@@ -21,7 +20,7 @@ class _PwMainStep extends State<PwMainStep> {
 
   void _handleBackClick() {
     // Handle navigation back
-    print("Navigate back");
+    Navigator.of(context).pop();
   }
 
   void _handleNextClick() {
@@ -29,7 +28,7 @@ class _PwMainStep extends State<PwMainStep> {
     print("Navigate to next step");
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => NicknameMain()),
+      MaterialPageRoute(builder: (context) => CheckStep()),
     );
   }
 
@@ -64,10 +63,28 @@ class _PwMainStep extends State<PwMainStep> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Positioned(
+                        left: 11,
+                        child: GestureDetector(
+                          onTap: _handleBackClick,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            child: Transform.rotate(
+                              angle: 1.5708, // 90 degrees in radians
+                              child: const Icon(
+                                Icons.keyboard_arrow_down,
+                                size: 30,
+                                color: Color(0xFF6029B7),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
                       Container(
                         margin: EdgeInsets.only(top: 64, left: 20),
                         child: Text(
-                          '비밀번호를 입력해주세요.',
+                          '새 비밀번호를 입력해주세요.',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

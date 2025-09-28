@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:microstone_clothing_bin/join/id_join.dart';
+import 'package:microstone_clothing_bin/join/join.dart';
+import 'package:microstone_clothing_bin/join/Terms/terms_of_service_1.dart';
+import 'package:microstone_clothing_bin/join/Terms/terms_of_service_2.dart';
+import 'package:microstone_clothing_bin/join/Terms/terms_of_service_3.dart';
 
 class CheckboxIcon extends StatelessWidget {
   final bool checked;
@@ -88,60 +91,6 @@ class CheckPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class StepProgressIndicator extends StatelessWidget {
-  final int currentStep;
-  final int totalSteps;
-
-  const StepProgressIndicator({
-    super.key,
-    required this.currentStep,
-    required this.totalSteps,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      top: 128,
-      left: 0,
-      right: 0,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(totalSteps, (index) {
-          final stepNumber = index + 1;
-          final isActive = stepNumber == currentStep;
-
-          return Container(
-            margin: EdgeInsets.only(right: index < totalSteps - 1 ? 19 : 0),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isActive
-                        ? const Color(0xFF6029B7)
-                        : const Color(0xFFBAA6DB),
-                  ),
-                ),
-                Text(
-                  stepNumber.toString(),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }),
-      ),
-    );
-  }
-}
-
 class TermsCheckbox extends StatelessWidget {
   final bool checked;
   final VoidCallback onChanged;
@@ -149,6 +98,7 @@ class TermsCheckbox extends StatelessWidget {
   final bool required;
   final bool showViewTerms;
   final VoidCallback? onViewTerms;
+  final VoidCallback? onPressed;
 
   const TermsCheckbox({
     super.key,
@@ -158,6 +108,7 @@ class TermsCheckbox extends StatelessWidget {
     this.required = false,
     this.showViewTerms = false,
     this.onViewTerms,
+    this.onPressed,
   });
 
   @override
@@ -201,14 +152,19 @@ class TermsCheckbox extends StatelessWidget {
           ),
           if (showViewTerms) ...[
             const SizedBox(width: 8),
-            GestureDetector(
-              onTap: onViewTerms,
+            TextButton(
+              onPressed: onPressed ?? onViewTerms,
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero, // 내부 여백 제거
+                minimumSize: Size(0, 0), // 버튼 기본 최소 크기 제거
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 터치 영역 딱 맞게
+                foregroundColor: const Color(0xFF6029B7), // 텍스트 색상 유지
+              ),
               child: const Text(
                 '약관보기 >',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF6029B7),
+                  fontSize: 12, // 기존과 동일
+                  fontWeight: FontWeight.w500, // 기존과 동일
                 ),
               ),
             ),
@@ -287,7 +243,7 @@ class _JoinFormState extends State<JoinForm> {
       print('Next button clicked');
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => IdJoinForm()),
+        MaterialPageRoute(builder: (context) => RegisterPage()),
       );
     }
   }
@@ -315,6 +271,27 @@ class _JoinFormState extends State<JoinForm> {
 
     void _handleBackClick() {
       Navigator.of(context).pop();
+    }
+
+    void _handleTerms1() {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => TermsOfService1()),
+      );
+    }
+
+    void _handleTerms2() {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => TermsOfService2()),
+      );
+    }
+
+    void _handleTerms3() {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => TermsOfService3()),
+      );
     }
 
     return Scaffold(
@@ -362,9 +339,6 @@ class _JoinFormState extends State<JoinForm> {
                   ],
                 ),
               ),
-
-              // Progress Indicator
-              const StepProgressIndicator(currentStep: 1, totalSteps: 5),
 
               // Main Content
               Positioned(
@@ -434,6 +408,7 @@ class _JoinFormState extends State<JoinForm> {
                             required: true,
                             showViewTerms: true,
                             onViewTerms: () => _handleViewTerms('signup'),
+                            onPressed: _handleTerms1,
                           ),
 
                           TermsCheckbox(
@@ -443,6 +418,7 @@ class _JoinFormState extends State<JoinForm> {
                             required: true,
                             showViewTerms: true,
                             onViewTerms: () => _handleViewTerms('privacy'),
+                            onPressed: _handleTerms2,
                           ),
 
                           TermsCheckbox(
@@ -453,6 +429,7 @@ class _JoinFormState extends State<JoinForm> {
                             required: true,
                             showViewTerms: true,
                             onViewTerms: () => _handleViewTerms('location'),
+                            onPressed: _handleTerms3,
                           ),
 
                           TermsCheckbox(

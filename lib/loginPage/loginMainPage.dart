@@ -3,13 +3,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:microstone_clothing_bin/loginPage/header&footer.dart';
-import 'package:microstone_clothing_bin/loginPage/loginDB.dart';
-import 'package:microstone_clothing_bin/loginPage/memberRegisterPage.dart';
+import 'package:microstone_clothing_bin/main.dart';
+import 'package:microstone_clothing_bin/config/mySQLConnector.dart';
+
 import 'logo.dart';
 import 'input_field.dart';
-import 'footer_links.dart';
-//import 'package:shared_preferences/shared_preferences.dart';
+import 'package:microstone_clothing_bin/loginPage/footer_links.dart';
 
 // 자동 로그인 확인
 // 토큰 있음 : 메인 페이지
@@ -49,7 +48,7 @@ class _TokenCheckState extends State<TokenCheck> {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: isToken ? MyAppPage() : LoginPage(),
+      home: isToken ? MyApp() : LoginPage(),
     );
   }
 }
@@ -65,30 +64,98 @@ class LoginMainPage extends StatelessWidget {
 }
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({Key? key}) : super(key: key);
 
   @override
-  State<LoginPage> createState() => _LoginState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginState extends State<LoginPage> {
+class _LoginPageState extends State<LoginPage> {
   // 자동 로그인 여부
   bool switchValue = false;
 
   // 아이디와 비밀번호 정보
-  final TextEditingController userIdController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final LoginService _loginService = LoginService();
 
-  void _setAutoLogin(String token) async {
-    // 공유저장소에 유저 DB의 인덱스 저장
+  bool _isLoading = false;
+  bool _autoLogin = false;
+  String _message = "";
+
+  // 자동 로그인 저장
+  Future<void> _saveToken(String token) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', token);
   }
 
   // 자동 로그인 해제
-  void _delAutoLogin() async {
+  Future<void> _removeToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
+  }
+
+  // 로그인 실행
+  Future<void> _handleLogin() async {
+    setState(() {
+      _isLoading = true;
+      _message = "";
+      if (_loginService == '-1') {
+        print('로그인 실패');
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('알림'),
+              content: const Text('아이디 또는 비밀번호가 올바르지 않습니다.'),
+              actions: [
+                TextButton(
+                  child: const Text('닫기'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        print('로그인 성공');
+
+        // 메인 페이지로 이동
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => MyApp()),
+        );
+      }
+    });
+
+    final result = await _loginService.login(
+      _usernameController.text.trim(),
+      _passwordController.text.trim(),
+    );
+
+    setState(() {
+      _isLoading = false;
+      if (result != null && result['token'] != null) {
+        _message = "로그인 성공!";
+
+        // 자동 로그인 설정
+        if (_autoLogin) {
+          _saveToken(result['token']);
+        } else {
+          _removeToken();
+        }
+
+        // TODO: 메인 페이지 이동
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => MyApp()),
+        );
+      } else {
+        _message = "로그인 실패! 아이디/비밀번호를 확인하세요.";
+      }
+    });
   }
 
   @override
@@ -111,7 +178,7 @@ class _LoginState extends State<LoginPage> {
                   child: SizedBox(
                     width: 300,
                     child: CupertinoTextField(
-                      controller: userIdController,
+                      controller: _usernameController,
                       placeholder: '아이디',
                       textAlign: TextAlign.center,
                     ),
@@ -124,7 +191,7 @@ class _LoginState extends State<LoginPage> {
                   child: SizedBox(
                     width: 300,
                     child: CupertinoTextField(
-                      controller: passwordController,
+                      controller: _passwordController,
                       placeholder: '비밀번호',
                       textAlign: TextAlign.center,
                       obscureText: true,
@@ -140,73 +207,27 @@ class _LoginState extends State<LoginPage> {
                     width: 300,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(
-                          0xFF7C3AED,
-                        ), // Violet-800 brand color background
-                        foregroundColor:
-                            Colors.white, // White text for contrast
-                        padding: EdgeInsets.symmetric(
-                          horizontal:
-                              64, // Wide horizontal padding for prominent button
-                          vertical:
-                              16, // Vertical padding for comfortable touch target
+                        backgroundColor: const Color(0xFF7C3AED), // 보라색 배경
+                        foregroundColor: Colors.white, // 흰색 텍스트
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 64,
+                          vertical: 16,
                         ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            8,
-                          ), // Rounded corners matching input fields
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        elevation: 0, // Flat design without shadow
+                        elevation: 0, // 그림자 제거
                       ),
-                      child: Text(
-                        '로그인', // Korean text for "Login"
-                        style: TextStyle(
-                          fontSize:
-                              12, // Small text size consistent with design
-                          fontWeight:
-                              FontWeight.w600, // Semi-bold for button emphasis
-                        ),
-                      ),
-                      onPressed: () async {
-                        final loginCheck = await login(
-                          userIdController.text,
-                          passwordController.text,
-                        );
-                        print(loginCheck);
-                        //건들지 말걸
-                        // 로그인 확인
-                        if (loginCheck == '-1') {
-                          print('로그인 실패');
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: Text('알림'),
-                                content: Text('아이디 또는 비밀번호가 올바르지 않습니다.'),
-                                actions: [
-                                  TextButton(
-                                    child: Text('닫기'),
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        } else {
-                          print('로그인 성공');
-
-                          // 메인 페이지로 이동
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => MyAppPage(),
+                      onPressed: _isLoading ? null : _handleLogin,
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              '로그인',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          );
-                        }
-                      },
-                      //child: Text('로그인'),
                     ),
                   ),
                 ),

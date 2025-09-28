@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:microstone_clothing_bin/join/pw/pw_main_step.dart';
 import 'package:microstone_clothing_bin/join/signup_header.dart';
 import 'package:microstone_clothing_bin/loginPage/loginDB.dart';
+import 'package:microstone_clothing_bin/config/mySQLConnector.dart';
+import 'package:microstone_clothing_bin/join/name/Nickname_main.dart';
 
 enum ButtonVariant { primary, secondary }
 
@@ -224,6 +226,106 @@ class _InputFieldState extends State<InputField> {
   }
 }
 
+class InputFieEM extends StatefulWidget {
+  final String label;
+  final String placeholder;
+  final bool showDuplicateCheck;
+  final VoidCallback? onDuplicateCheck;
+
+  const InputFieEM({
+    Key? key,
+    required this.label,
+    required this.placeholder,
+    this.showDuplicateCheck = false,
+    this.onDuplicateCheck,
+  }) : super(key: key);
+
+  @override
+  State<InputFieEM> createState() => _InputFieEMState();
+}
+
+class _InputFieEMState extends State<InputFieEM> {
+  final TextEditingController userIdController = TextEditingController();
+
+  @override
+  void dispose() {
+    userIdController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 48, left: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF18181B), // zinc-900
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFF7C3AED), // violet-800
+                          width: 1,
+                        ),
+                      ),
+                      child: TextField(
+                        controller: userIdController,
+                        decoration: InputDecoration(
+                          hintText: widget.placeholder,
+                          hintStyle: const TextStyle(
+                            color: Color(0xFFA3A3A3), // neutral-400
+                            fontWeight: FontWeight.w500,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (widget.showDuplicateCheck) ...[
+                const SizedBox(width: 4),
+                CustomButton(
+                  text: "중복 확인",
+                  variant: ButtonVariant.primary,
+                  size: ButtonSize.small,
+                  onPressed: () async {
+                    final IDCheck = await confirmIdCheck(userIdController.text);
+                  },
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class IdJoinForm extends StatefulWidget {
   const IdJoinForm({Key? key}) : super(key: key);
 
@@ -235,13 +337,6 @@ class _SignupFormState extends State<IdJoinForm> {
   void _handleDuplicateCheck() {
     // Handle duplicate check logic
     print("Checking for duplicates...");
-  }
-
-  void _handleNext() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => PwMainStep()),
-    );
   }
 
   @override
@@ -276,12 +371,28 @@ class _SignupFormState extends State<IdJoinForm> {
                         // Header
                         SignupHeader(),
 
-                        // Step Indicator
-                        const StepIndicator(currentStep: 2, totalSteps: 5),
+                        // Input FieEmail
+                        Container(
+                          margin: const EdgeInsets.only(top: 54, left: 20),
+                          child: const Text(
+                            "이메일을 입력해주세요.",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF18181B), // zinc-900
+                            ),
+                          ),
+                        ),
+                        InputFieEM(
+                          label: "이메일",
+                          placeholder: "이메일 입력",
+                          showDuplicateCheck: true,
+                          onDuplicateCheck: _handleDuplicateCheck,
+                        ),
 
                         // Main Content
                         Container(
-                          margin: const EdgeInsets.only(top: 64, left: 20),
+                          margin: const EdgeInsets.only(top: 54, left: 20),
                           child: const Text(
                             "아이디를 입력해주세요.",
                             style: TextStyle(
@@ -301,38 +412,14 @@ class _SignupFormState extends State<IdJoinForm> {
                           onDuplicateCheck: _handleDuplicateCheck,
                         ),
 
+                        PwMainStep(),
+
                         // Spacer
                         const SizedBox(height: 30),
 
-                        // Next Button
-                        Positioned(
-                          bottom: 62,
-                          left: isMobile
-                              ? screenWidth * 0.08
-                              : (isTablet ? screenWidth * 0.06 : 30),
-                          right: isMobile
-                              ? screenWidth * 0.08
-                              : (isTablet ? screenWidth * 0.06 : 30),
-                          child: GestureDetector(
-                            onTap: _handleNext,
-                            child: Container(
-                              height: 45,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF6029B7),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              alignment: Alignment.center,
-                              child: const Text(
-                                '다음으로',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                        PwMainStep(),
+
+                        NicknameMain(),
                       ],
                     ),
                   ),
